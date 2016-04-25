@@ -1,6 +1,5 @@
 # Created by .ignore support plugin (hsz.mobi)
 *~
 .DS_Store
-.xml
 .pyc
-.iml
+.idea

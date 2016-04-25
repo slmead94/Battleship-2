@@ -9,17 +9,12 @@ Semester 2, Freshman Year HS
 Started: April 20th, 11:30, 2016
 
 //******************************************************************//
-
 """
 import util
 
 
-def intro():
-    print "\tWelcome to Battleship 2!\n"
-
-
 def get_baseline():
-    intro()
+    print "\tWelcome to Battleship 2!\n"
     chosen_level = None
     chosen_type = None
     more = True
@@ -28,7 +23,7 @@ def get_baseline():
     game_modes = ["Lieutenant", "Captain", "Admiral"]  # different Naval Ranks for the skill levels
     name = raw_input("Enter your name: ")  # name please?
 
-    print "\nYou may choose from " + str(len(battlefield_types)) + " different battlefield types:\n"
+    print "\nYou may choose from " + str(len(battlefield_types)) + " different battlefield types: (less space - easier to hit each other)\n"
     for i in range(0, len(battlefield_types)):
         print str(i + 1) + ".   " + str(battlefield_types[i][0]) + " X " + str(battlefield_types[i][1])  # print list in format
     while more:  # verification loop
@@ -47,11 +42,32 @@ def get_baseline():
     height = battlefield_types[int(chosen_type) - 1][1]
     mode = game_modes[int(chosen_level) - 1]
 
+    # create base objects to return
     new_player = Player(mode, name)
+    comp_player = Player(mode, "Computer")
     new_board = Battlefield(height, width, "Player Board")
+    comp_board = Battlefield(height, width, "Computer Board")
     new_board.fill_board()  # fill the new board with all empty spaces
 
-    return new_board, new_player  # return the new objects to be used in Main
+    return new_board, new_player, comp_board, comp_player  # return the new objects to be used in Main
+
+
+class Fleet:
+    def __init__(self, who, total_lengths):
+        self.destroyed = False
+        self.num_ships = 5
+        self.who = who
+        self.total_lengths = total_lengths
+
+
+class Ship:
+    def __init__(self, length, ship_name, direction, x, y):
+        self.length = length
+        self.direction = direction
+        self.ship_name = ship_name
+        self.x = x
+        self.y = y
+        self.sunk = False
 
 
 class Player:
@@ -87,9 +103,16 @@ class Battlefield:
 class Screen:
     def __init__(self):
         self.spacer = "| "
-        self.other_line = "    ___________________________________________________________"
+        self.other_line = ""
+
+    def intro_board(self):
+        print "\nThis is what the board looks like:\n"
+        self.print_board(main_game.battlefield)
+        print "\nYou will place your ships and fire at the opponents ships by\n" \
+              "choosing an x and y coordinate."
 
     def print_board(self, board_object):
+        i = 0
         print board_object.header
         print "    ",
         for i in range(0, len(board_object.board_numbers)):  # print the numbers
@@ -97,6 +120,7 @@ class Screen:
                 print board_object.board_numbers[i] + "  ",
             else:
                 print board_object.board_numbers[i] + " ",
+        self.other_line = "    " + "____" * (i + 1)
         print  # space
 
         print self.other_line
@@ -111,9 +135,52 @@ class Screen:
 
 
 class Main:
-    def __init__(self, user, battlefield):
+    def __init__(self, user, battlefield, comp_battlefield, comp):
+        self.ship_lengths = [5, 4, 3, 3, 2]
+        self.directions = ["Up", "Down", "Left", "Right"]
+        self.names = ["Carrier", "Battleship", "Cruiser", "Submarine", "Frigate"]
+        self.ships = []
         self.battlefield = battlefield
         self.user = user
+        self.comp = comp
+        self.computer_board = comp_battlefield
 
-player_board, player = get_baseline()
-main_game = Main(player, player_board)
+    def make_ships(self):
+        direct = None
+        x_axis = None
+        y_axis = None
+
+        for i in range(len(self.ship_lengths)):
+            txt_width = "Choose an X coordinate for your " + self.names[i] + "'s head to be on (1 - " + str(self.battlefield.width) + "): "
+            txt_height = "Choose an Y coordinate for your " + self.names[i] + "'s head to be on (1 - " + str(self.battlefield.height) + "): "
+            more = True
+            mores = True
+            more_ = True
+
+            for j in range(len(self.directions)):
+                print str(j + 1) + ".  " + self.directions[j]
+            print
+
+            while more:
+                direct = raw_input("Choose the number related to the direction that you would like your " + self.names[i] + " to face: ")
+                more = util.try_int(direct, [1, 2, 3, 4])
+            direct = self.directions[int(direct) - 1]
+
+            print self.battlefield.board_numbers
+            while mores:
+                x_axis = raw_input(txt_width)
+                mores = util.try_battlefield_int(x_axis, self.battlefield.board_numbers)
+
+            while more_:
+                y_axis = raw_input(txt_height)
+                more_ = util.try_battlefield_int(y_axis, self.battlefield.board_numbers)
+
+            new_ship = Ship(self.ship_lengths[i], self.names[i], direct, x_axis, y_axis)
+            self.ships.append(new_ship)
+            print
+
+player_board, player, c_board, computer = get_baseline()
+main_game = Main(player, player_board, c_board, computer)
+screen = Screen()
+screen.intro_board()
+main_game.make_ships()
