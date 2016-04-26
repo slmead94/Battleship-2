@@ -1,10 +1,10 @@
 """
 //**********************************************//
 
-Battleship 2 utility module
-Assignment: Final Project
-Semester 2, Freshman Year HS
-Started: April 21st, 2016
+    Battleship 2 utility module
+    Assignment: Final Project
+    Semester 2, Freshman Year HS
+    Started: April 21st, 2016
 
 //**********************************************//
 """
