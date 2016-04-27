@@ -74,6 +74,9 @@ class Battlefield:
             for j in range(0, self.width):
                 self.main_board[i].append(self.empty)
 
+    def add_ship(self, ship):
+        print ship
+
 
 class Screen:
     def __init__(self):
@@ -85,7 +88,7 @@ class Screen:
         self.print_board(main_game.battlefield)
         raw_input("\nPress Return: ")  # pause the program so the user can keep up
         print "\nYou will place your ships and fire at the opponents ships by\n" \
-              "choosing an x and y coordinate.\n"
+              "choosing an x and y coordinate (with the addition of choosing a direction when you place your ships).\n"
 
     def print_board(self, board_object):
         i = 0
@@ -116,7 +119,7 @@ class Fleet:
         self.ship_lengths = [5, 4, 3, 3, 2]
         self.directions = ["Up", "Down", "Left", "Right"]
         self.names = ["Carrier", "Battleship", "Cruiser", "Submarine", "Frigate"]
-        self.ships = []
+        self.ships = []  # list of 5 ship objects
         self.destroyed = False
         self.num_ships = len(self.names)
         self.who = who
@@ -131,33 +134,102 @@ class Fleet:
         y_axis = None
 
         for i in range(len(self.ship_lengths)):
-            txt_width = "Choose an X coordinate for your " + self.names[i] + "'s head to be on (1 - " + str(main_game.battlefield.width) + "): "
-            txt_height = "Choose an Y coordinate for your " + self.names[i] + "'s head to be on (1 - " + str(main_game.battlefield.height) + "): "
-            # boolean loop controllers
+            # boolean loop controllers:
             more = True
             mores = True
             more_ = True
 
+            print self.names[i] + ":\n"
             for j in range(len(self.directions)):  # print the list of directions to chose from
                 print str(j + 1) + ".  " + self.directions[j]
             print  # spacer
 
-            while more:
+            while more:  # get direction
                 direct = raw_input("Choose the number related to the direction that you would like your " + self.names[i] + " to face: ")
                 more = util.try_int(direct, [1, 2, 3, 4])
-            direct = self.directions[int(direct) - 1]
+            direct = self.directions[int(direct) - 1][0]
+            x_list, y_list = self.get_list(direct, i)
+            print x_list
+            print y_list
+            # pre-made messages because they are too long to fit inside of a raw_input() statement and still be behind the line:
+            txt_width = "Choose an X coordinate for your " + self.names[i] + "'s head to be on (1 - " + x_list[-1] + "): "
+            txt_height = "Choose an Y coordinate for your " + self.names[i] + "'s head to be on (1 - " + y_list[-1] + "): "
 
-            while mores:
+            while mores:  # get x coordinate
                 x_axis = raw_input(txt_width)
-                mores = util.try_battlefield_int(x_axis, main_game.battlefield.board_numbers)
+                mores = util.try_battlefield_int(x_axis, x_list)
 
-            while more_:
+            while more_:  # get y coordinate
                 y_axis = raw_input(txt_height)
-                more_ = util.try_battlefield_int(y_axis, main_game.battlefield.board_numbers)
+                more_ = util.try_battlefield_int(y_axis, y_list)
 
             new_ship = Ship(self.ship_lengths[i], self.names[i], direct, x_axis, y_axis)
-            self.ships.append(new_ship)
-            print
+            self.ships.append(new_ship)  # append the newest ship to the ships list
+            player_board.add_ship(new_ship)  # put newly create ship on the board
+            print  # spacer
+
+    def get_list(self, direction, counter):
+        x_axis_ls = []
+        y_axis_ls = []
+        count_x = player_board.width
+        count_y = player_board.height
+        beg_y = 0
+        beg_x = 0
+        var = 0
+
+        if player_board.width == 10:
+            var = 0
+        elif player_board.width == 15:
+            var = 5
+        elif player_board.width == 20:
+            var = 10
+
+        if direction == "U":
+            if self.ship_lengths[counter] == 5:
+                count_y = 6 + var
+            elif self.ship_lengths[counter] == 4:
+                count_y = 7 + var
+            elif self.ship_lengths[counter] == 3:
+                count_y = 8 + var
+            elif self.ship_lengths[counter] == 2:
+                count_y = 9 + var
+
+        elif direction == "D":
+            if self.ship_lengths[counter] == 5:
+                beg_y = 4
+            elif self.ship_lengths[counter] == 4:
+                beg_y = 3
+            elif self.ship_lengths[counter] == 3:
+                beg_y = 2
+            elif self.ship_lengths[counter] == 2:
+                beg_y = 1
+
+        elif direction == "L":
+            if self.ship_lengths[counter] == 5:
+                count_x = 6 + var
+            elif self.ship_lengths[counter] == 4:
+                count_x = 7 + var
+            elif self.ship_lengths[counter] == 3:
+                count_x = 8 + var
+            elif self.ship_lengths[counter] == 2:
+                count_x = 9 + var
+
+        elif direction == "R":
+            if self.ship_lengths[counter] == 5:
+                beg_x = 4
+            elif self.ship_lengths[counter] == 4:
+                beg_x = 3
+            elif self.ship_lengths[counter] == 3:
+                beg_x = 2
+            elif self.ship_lengths[counter] == 2:
+                beg_x = 1
+
+        for j in range(beg_y, count_y):
+            y_axis_ls.append(str(j + 1))
+        for i in range(beg_x, count_x):
+            x_axis_ls.append(str(i + 1))
+
+        return x_axis_ls, y_axis_ls
 
 
 class Ship:
@@ -186,8 +258,9 @@ class Main:
         self.comp = comp
         self.computer_board = comp_battlefield
 
-player_board, player, c_board, computer, player_fleet, comp_fleet = get_baseline()  # start program and get basic information
-main_game = Main(player, player_board, c_board, computer)  # create the main object
+player_board, player, computer_board, computer, player_fleet, comp_fleet = get_baseline()  # start program and get basic information
+
+main_game = Main(player, player_board, computer_board, computer)  # create the main object
 screen = Screen()
 screen.intro_board()
 player_fleet.make_ships()
