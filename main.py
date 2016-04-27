@@ -74,7 +74,8 @@ class Battlefield:
             for j in range(0, self.width):
                 self.main_board[i].append(self.empty)
 
-    def add_ship(self, ship):
+    @staticmethod
+    def add_ship(ship):
         print ship
 
 
@@ -148,12 +149,14 @@ class Fleet:
                 direct = raw_input("Choose the number related to the direction that you would like your " + self.names[i] + " to face: ")
                 more = util.try_int(direct, [1, 2, 3, 4])
             direct = self.directions[int(direct) - 1][0]
+
             x_list, y_list = self.get_list(direct, i)
             print x_list
             print y_list
+
             # pre-made messages because they are too long to fit inside of a raw_input() statement and still be behind the line:
-            txt_width = "Choose an X coordinate for your " + self.names[i] + "'s head to be on (1 - " + x_list[-1] + "): "
-            txt_height = "Choose an Y coordinate for your " + self.names[i] + "'s head to be on (1 - " + y_list[-1] + "): "
+            txt_width = "Choose an X coordinate for your " + self.names[i] + "'s head to be on (" + x_list[0] + " - " + x_list[-1] + "): "
+            txt_height = "Choose an Y coordinate for your " + self.names[i] + "'s head to be on (" + y_list[0] + " - " + y_list[-1] + "): "
 
             while mores:  # get x coordinate
                 x_axis = raw_input(txt_width)
@@ -169,6 +172,19 @@ class Fleet:
             print  # spacer
 
     def get_list(self, direction, counter):
+        """
+
+        :param direction: The direction the boat wants be pointed in
+        :param counter: the current value of i in the method that called this method
+
+        :return: newly made lists for use back in the ship creation method
+
+        I originally had an if statement for each direction but I realized that
+        a couple of them had very very similar features and decided to combine them.
+        To do so I had to add a few more variables and a couple more if / elif statements
+        at the bottom of the method, but it works a whole lot more efficiently now.
+        """
+
         x_axis_ls = []
         y_axis_ls = []
         count_x = player_board.width
@@ -176,6 +192,8 @@ class Fleet:
         beg_y = 0
         beg_x = 0
         var = 0
+        chosen = 0
+        chosen_ = 0
 
         if player_board.width == 10:
             var = 0
@@ -184,45 +202,33 @@ class Fleet:
         elif player_board.width == 20:
             var = 10
 
+        if direction == "U" or direction == "L":
+            if self.ship_lengths[counter] == 5:
+                chosen = 6 + var
+            elif self.ship_lengths[counter] == 4:
+                chosen = 7 + var
+            elif self.ship_lengths[counter] == 3:
+                chosen = 8 + var
+            elif self.ship_lengths[counter] == 2:
+                chosen = 9 + var
+        elif direction == "D" or direction == "R":
+            if self.ship_lengths[counter] == 5:
+                chosen_ = 4
+            elif self.ship_lengths[counter] == 4:
+                chosen_ = 3
+            elif self.ship_lengths[counter] == 3:
+                chosen_ = 2
+            elif self.ship_lengths[counter] == 2:
+                chosen_ = 1
+
         if direction == "U":
-            if self.ship_lengths[counter] == 5:
-                count_y = 6 + var
-            elif self.ship_lengths[counter] == 4:
-                count_y = 7 + var
-            elif self.ship_lengths[counter] == 3:
-                count_y = 8 + var
-            elif self.ship_lengths[counter] == 2:
-                count_y = 9 + var
-
-        elif direction == "D":
-            if self.ship_lengths[counter] == 5:
-                beg_y = 4
-            elif self.ship_lengths[counter] == 4:
-                beg_y = 3
-            elif self.ship_lengths[counter] == 3:
-                beg_y = 2
-            elif self.ship_lengths[counter] == 2:
-                beg_y = 1
-
+            count_y = chosen
         elif direction == "L":
-            if self.ship_lengths[counter] == 5:
-                count_x = 6 + var
-            elif self.ship_lengths[counter] == 4:
-                count_x = 7 + var
-            elif self.ship_lengths[counter] == 3:
-                count_x = 8 + var
-            elif self.ship_lengths[counter] == 2:
-                count_x = 9 + var
-
+            count_x = chosen
+        elif direction == "D":
+            beg_y = chosen_
         elif direction == "R":
-            if self.ship_lengths[counter] == 5:
-                beg_x = 4
-            elif self.ship_lengths[counter] == 4:
-                beg_x = 3
-            elif self.ship_lengths[counter] == 3:
-                beg_x = 2
-            elif self.ship_lengths[counter] == 2:
-                beg_x = 1
+            beg_x = chosen_
 
         for j in range(beg_y, count_y):
             y_axis_ls.append(str(j + 1))
@@ -247,8 +253,12 @@ class Player:
         self.name = name
         self.game_mode = game_mode
         self.winner = False
+
+        # stats:
         self.number_hits = 0
         self.number_sunk = 0
+        self.shots_fired = 0
+        self.number_missed = 0
 
 
 class Main:
