@@ -26,13 +26,14 @@ def get_baseline():
     print "\nYou may choose from " + str(len(battlefield_types)) + " different battlefield types: (less space - easier to hit each other)\n"
     for i in range(0, len(battlefield_types)):
         print str(i + 1) + ".   " + str(battlefield_types[i][0]) + " X " + str(battlefield_types[i][1])  # print list in format
+
     while more:  # verification loop
         chosen_type = raw_input("Choose one of the above numbers: ")
         more = util.try_int(chosen_type, [1, 2, 3])
 
     print "\nYou may choose from " + str(len(game_modes)) + " game modes to play:\n"
-    for j in range(0, len(game_modes)):
-        print str(j + 1) + ".  " + game_modes[j]  # print list in format
+    screen.print_numbered_list(game_modes)
+
     while continue_:
         chosen_level = raw_input("Choose one of the above numbers: ")
         continue_ = util.try_int(chosen_level, [1, 2, 3])
@@ -74,9 +75,31 @@ class Battlefield:
             for j in range(0, self.width):
                 self.main_board[i].append(self.empty)
 
-    @staticmethod
-    def add_ship(ship):
-        print ship
+    def add_ship(self, ship, board):
+        ship.y = int(ship.y) - 1
+        ship.x = int(ship.x) - 1
+
+        if ship.direction == "U":
+            symbol = self.ship_up
+            for i in range(0, ship.length):
+                board.main_board[ship.y + i][ship.x] = symbol
+
+        elif ship.direction == "D":
+            symbol = self.ship_down
+            for i in range(0, ship.length):
+                    board.main_board[ship.y - i][ship.x] = symbol
+
+        elif ship.direction == "L":
+            symbol = self.ship_left
+            for i in range(0, ship.length):
+                board.main_board[ship.y][ship.x + i] = symbol
+
+        elif ship.direction == "R":
+            symbol = self.ship_right
+            for i in range(0, ship.length):
+                board.main_board[ship.y][ship.x - i] = symbol
+
+        screen.print_board(board)
 
 
 class Screen:
@@ -114,6 +137,13 @@ class Screen:
                 print self.spacer + board_object.main_board[rows][columns],
             print self.spacer
 
+    @staticmethod
+    def print_numbered_list(ls):
+        # this makes printing a list with numbers in front of each item much more accessible
+        for i in range(0, len(ls)):
+            print str(i + 1) + ".  " + ls[i]
+        print
+
 
 class Fleet:
     def __init__(self, who):
@@ -124,8 +154,11 @@ class Fleet:
         self.destroyed = False
         self.num_ships = len(self.names)
         self.who = who
+        self.total_lengths = 0
 
-        self.total_lengths = 0  # calculate the total lengths of all of the ships
+        # Calculate the total lengths of all of the ships:
+        # This is here in case we decide to change the length of a ship later.
+        # It makes it more susceptible to change in the future.
         for i in range(0, len(self.ship_lengths)):
             self.total_lengths += self.ship_lengths[i]
 
@@ -141,9 +174,7 @@ class Fleet:
             more_ = True
 
             print self.names[i] + ":\n"
-            for j in range(len(self.directions)):  # print the list of directions to chose from
-                print str(j + 1) + ".  " + self.directions[j]
-            print  # spacer
+            screen.print_numbered_list(self.directions)
 
             while more:  # get direction
                 direct = raw_input("Choose the number related to the direction that you would like your " + self.names[i] + " to face: ")
@@ -151,9 +182,6 @@ class Fleet:
             direct = self.directions[int(direct) - 1][0]
 
             x_list, y_list = self.get_list(direct, i)
-            print x_list
-            print y_list
-
             # pre-made messages because they are too long to fit inside of a raw_input() statement and still be behind the line:
             txt_width = "Choose an X coordinate for your " + self.names[i] + "'s head to be on (" + x_list[0] + " - " + x_list[-1] + "): "
             txt_height = "Choose an Y coordinate for your " + self.names[i] + "'s head to be on (" + y_list[0] + " - " + y_list[-1] + "): "
@@ -168,7 +196,7 @@ class Fleet:
 
             new_ship = Ship(self.ship_lengths[i], self.names[i], direct, x_axis, y_axis)
             self.ships.append(new_ship)  # append the newest ship to the ships list
-            player_board.add_ship(new_ship)  # put newly create ship on the board
+            player_board.add_ship(new_ship, player_board)  # put newly create ship on the board
             print  # spacer
 
     def get_list(self, direction, counter):
@@ -176,8 +204,11 @@ class Fleet:
 
         :param direction: The direction the boat wants be pointed in
         :param counter: the current value of i in the method that called this method
-
         :return: newly made lists for use back in the ship creation method
+
+        This method creates a list with the correct values depending on the size
+        of the battlefield and then returns it so the user is forced to choose
+        certain rows and columns so the ships don't automatically overlap.
 
         I originally had an if statement for each direction but I realized that
         a couple of them had very very similar features and decided to combine them.
@@ -195,6 +226,7 @@ class Fleet:
         chosen = 0
         chosen_ = 0
 
+        # this determines how much to add to the original hard coded values in the below algorithm
         if player_board.width == 10:
             var = 0
         elif player_board.width == 15:
@@ -268,9 +300,9 @@ class Main:
         self.comp = comp
         self.computer_board = comp_battlefield
 
+screen = Screen()
 player_board, player, computer_board, computer, player_fleet, comp_fleet = get_baseline()  # start program and get basic information
 
 main_game = Main(player, player_board, computer_board, computer)  # create the main object
-screen = Screen()
 screen.intro_board()
 player_fleet.make_ships()
