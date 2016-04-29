@@ -11,16 +11,18 @@
 //******************************************************************//
 """
 import util
+import random
 
 
 def get_baseline():
-    print "\tWelcome to Battleship 2!\n"
     chosen_level = None
     chosen_type = None
     more = True
     continue_ = True
     battlefield_types = [[10, 10], [15, 15], [20, 20]]  # 10 X 10, 15 X 15, 20 X 20
     game_modes = ["Lieutenant", "Captain", "Admiral"]  # different Naval Ranks for the skill levels
+
+    print "\tWelcome to Battleship 2!\n"
     name = raw_input("Enter your name: ")  # name please?
 
     print "\nYou may choose from " + str(len(battlefield_types)) + " different battlefield types: (less space - easier to hit each other)\n"
@@ -49,8 +51,9 @@ def get_baseline():
     new_player = Player(mode, name)
     comp_player = Player(mode, "Computer")
     new_board = Battlefield(height, width, "Player Board")
-    comp_board = Battlefield(height, width, "Computer Board")
     new_board.fill_board()  # fill the new board with all empty spaces
+    comp_board = Battlefield(height, width, "Computer Board")
+    comp_board.fill_board()  # fill the new computer board with empty spaces
 
     return new_board, new_player, comp_board, comp_player, p_fleet, c_fleet  # return the new objects to be used in Main
 
@@ -76,6 +79,7 @@ class Battlefield:
                 self.main_board[i].append(self.empty)
 
     def add_ship(self, ship, board):
+        # we have to decrement the coordinates so they conform to the ways of the list
         ship.y = int(ship.y) - 1
         ship.x = int(ship.x) - 1
 
@@ -99,7 +103,9 @@ class Battlefield:
             for i in range(0, ship.length):
                 board.main_board[ship.y][ship.x - i] = symbol
 
-        screen.print_board(board)
+        if board.header == "Player Board":
+            print
+            screen.print_board(board)
 
 
 class Screen:
@@ -162,6 +168,33 @@ class Fleet:
         for i in range(0, len(self.ship_lengths)):
             self.total_lengths += self.ship_lengths[i]
 
+    def make_comp_ships(self):
+        used_x_axis = []
+        used_y_axis = []
+        for i in range(0, len(self.ship_lengths)):
+            x_axis = None
+            y_axis = None
+            more = True
+            more_ = True
+            direct = "U"  # as of now the computer's ships will all be facing upwards
+            x_list, y_list = self.get_list(direct, i)
+
+            while more:
+                x_axis = random.choice(x_list)
+                more = util.try_computer_ship_coordinate(x_axis, used_x_axis)
+            used_x_axis.append(x_axis)
+            x_axis = int(x_axis)
+
+            while more_:
+                y_axis = random.choice(y_list)
+                more_ = util.try_computer_ship_coordinate(y_axis, used_y_axis)
+            used_y_axis.append(y_axis)
+            y_axis = int(y_axis)
+
+            new_ship = Ship(self.ship_lengths[i], "Computer's " + self.names[i], direct, x_axis, y_axis)
+            self.ships.append(new_ship)
+            computer_board.add_ship(new_ship, computer_board)
+
     def make_ships(self):
         direct = None
         x_axis = None
@@ -173,7 +206,7 @@ class Fleet:
             mores = True
             more_ = True
 
-            print self.names[i] + ":\n"
+            print self.names[i] + " (size=" + str(self.ship_lengths[i]) + "):\n"
             screen.print_numbered_list(self.directions)
 
             while more:  # get direction
@@ -204,7 +237,7 @@ class Fleet:
 
         :param direction: The direction the boat wants be pointed in
         :param counter: the current value of i in the method that called this method
-        :return: newly made lists for use back in the ship creation method
+        :return: newly made lists for use back in the ship creation method ^^
 
         This method creates a list with the correct values depending on the size
         of the battlefield and then returns it so the user is forced to choose
@@ -218,7 +251,7 @@ class Fleet:
 
         x_axis_ls = []
         y_axis_ls = []
-        count_x = player_board.width
+        count_x = player_board.width  # the player board is the same dimensions as the computer's board
         count_y = player_board.height
         beg_y = 0
         beg_x = 0
@@ -235,6 +268,7 @@ class Fleet:
             var = 10
 
         if direction == "U" or direction == "L":
+            # the values like 6, 7, 8, etc. would need to be edited if we ever changed the length of a ship
             if self.ship_lengths[counter] == 5:
                 chosen = 6 + var
             elif self.ship_lengths[counter] == 4:
@@ -300,9 +334,14 @@ class Main:
         self.comp = comp
         self.computer_board = comp_battlefield
 
+# *--------| Main |--------* #
+# object creation:
 screen = Screen()
 player_board, player, computer_board, computer, player_fleet, comp_fleet = get_baseline()  # start program and get basic information
-
 main_game = Main(player, player_board, computer_board, computer)  # create the main object
+
+# main program:
 screen.intro_board()
 player_fleet.make_ships()
+comp_fleet.make_comp_ships()
+screen.print_board(computer_board)

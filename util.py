@@ -34,3 +34,10 @@ def try_battlefield_int(num, ls):
     except ValueError:
         print "Bad input! Try again:"
         return True
+
+
+def try_computer_ship_coordinate(num, ls):
+    if num in ls:
+        return True  # the coordinate is in the used coordinates list return True
+    else:
+        return False
