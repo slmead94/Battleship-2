@@ -49,4 +49,6 @@ def loading():
     time.sleep(0.33)
     print ".",
     time.sleep(0.33)
-    print "."
+    print ".",
+    time.sleep(0.33)
+    print

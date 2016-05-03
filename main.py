@@ -20,7 +20,7 @@ def get_baseline():
     more = True
     continue_ = True
     battlefield_types = [[10, 10], [15, 15], [20, 20]]  # 10 X 10, 15 X 15, 20 X 20
-    game_modes = ["Lieutenant", "Captain", "Admiral"]  # different Naval Ranks for the skill levels
+    game_modes = ["Lieutenant", "Captain"]  # different Naval Ranks for the skill levels
 
     print "\tWelcome to Battleship 2!\n"
     name = raw_input("Enter your name: ")  # name please?
@@ -38,7 +38,7 @@ def get_baseline():
 
     while continue_:
         chosen_level = raw_input("Choose one of the above numbers: ")
-        continue_ = util.try_int(chosen_level, [1, 2, 3])
+        continue_ = util.try_int(chosen_level, [1, 2])
 
     # fill variables with the data we have just collected:
     width = battlefield_types[int(chosen_type) - 1][0]
@@ -64,13 +64,10 @@ class Battlefield:
         self.height = height
         self.width = width
         self.empty = "_"
-        self.ship_types = ["V", "<", ">", "^"]
         self.ship_up = "^"
         self.ship_down = "V"
         self.ship_left = "<"
         self.ship_right = ">"
-        self.hit = "X"
-        self.miss = "*"
         self.main_board = []
         self.board_numbers = []
 
@@ -81,38 +78,14 @@ class Battlefield:
             for j in range(0, self.width):
                 self.main_board[i].append(self.empty)
 
-    def fire(self, x, y, who):
-        x_axis = int(x) - 1  # decrement the variables so they can work correctly with lists
-        y_axis = int(y) - 1
-
-        if who.upper() == "USER":
-            if computer_board.main_board[y_axis][x_axis] in self.ship_types:
-                print "You have hit a ship!\n"
-                computer_board.main_board[y_axis][x_axis] = self.hit
-                player.number_hits += 1
-
-            elif computer_board.main_board[y_axis][x_axis] == self.empty:
-                print "Miss\n"
-                computer_board.main_board[y_axis][x_axis] = self.miss
-                player.number_missed += 1
-
-            player.shots_fired += 1
-        else:
-            if player_board.main_board[y_axis][x_axis] in self.ship_types:
-                print "You have been hit!!!\n"
-                player_board.main_board[y_axis][x_axis] = self.hit
-                computer.number_hits += 1
-
-            elif player_board.main_board[y_axis][x_axis] == self.empty:
-                print "The computer missed you\n"
-                player_board.main_board[y_axis][x_axis] = self.miss
-                computer.number_missed += 1
-
-            computer.shots_fired += 1
-            screen.print_board(player_board)
-
     def add_ship(self, ship, board):
-        # we have to decrement the coordinates so they conform to the ways of the list
+        """
+        :param ship: The ship object that contains all of the data needed to put the ship on the given board
+        :param board: the given battlefield that the ship is going to be placed on to
+        """
+
+        global player_board, computer_board
+        # we have to decrement the coordinates so they conform to the ways of the list8
         ship.y = int(ship.y) - 1
         ship.x = int(ship.x) - 1
 
@@ -138,7 +111,141 @@ class Battlefield:
 
         if board.header == "Player Board":
             print
-            screen.print_board(board)
+            player_board = board
+            screen.print_board(player_board)
+        else:
+            computer_board = board
+
+
+class Game:
+    def __init__(self):
+        self.hit = "X"
+        self.miss = "*"
+        self.empty = "_"
+        self.ship_types = ["V", "<", ">", "^"]
+        self.used = []
+        self.last = []
+        self.last_was_hit = False
+        self.computer_x = None
+        self.computer_y = None
+
+    def fire(self, x, y, who):
+        x_axis = int(x) - 1  # decrement the variables so they can work correctly with lists
+        y_axis = int(y) - 1
+
+        if who.upper() == "USER":
+            if computer_board.main_board[y_axis][x_axis] in self.ship_types:
+                print "You have hit a ship!\n"
+                computer_board.main_board[y_axis][x_axis] = self.hit
+                player.number_hits += 1
+
+            elif computer_board.main_board[y_axis][x_axis] == self.empty:
+                print "Miss\n"
+                computer_board.main_board[y_axis][x_axis] = self.miss
+                player.number_missed += 1
+
+            player.shots_fired += 1
+            raw_input("Press return to continue: ")
+        else:
+            if player_board.main_board[y_axis][x_axis] in self.ship_types:
+                print "You have been hit!!!\n"
+                player_board.main_board[y_axis][x_axis] = self.hit
+                computer.number_hits += 1
+                game.last_was_hit = True
+
+            elif player_board.main_board[y_axis][x_axis] == self.empty:
+                print "The computer missed you\n"
+                player_board.main_board[y_axis][x_axis] = self.miss
+                computer.number_missed += 1
+                game.last_was_hit = False
+
+            computer.shots_fired += 1
+            screen.print_board(player_board)
+
+    def get_user_shot(self):
+        more = True
+        y_axis = None
+        x_axis = None
+        ls = player_board.board_numbers
+
+        while more:
+            current_try = []
+            mores = False
+            more_ = False
+
+            while not mores:  # get x coordinate
+                x_axis = raw_input("Choose a X coordinate to fire on (1 - " + str(ls[-1]) + "): ")
+                mores = util.try_computer_ship_coordinate(x_axis, ls)
+
+            while not more_:  # get y coordinate
+                y_axis = raw_input("Choose a Y coordinate to fire on (1 - " + str(ls[-1]) + "): ")
+                more_ = util.try_computer_ship_coordinate(y_axis, ls)
+
+            current_try.append(x_axis)  # append the coordinates to the list to compare with the used list
+            current_try.append(y_axis)
+
+            if current_try in self.used:
+                print "You've already fired on the coordinate. Try again:\n"
+                more = True
+            else:
+                self.used.append(current_try)
+                more = False
+
+        print "\nFiring",
+        util.loading()
+
+        return int(x_axis), int(y_axis)
+
+    @staticmethod
+    def beginner():  # there is literally no way the user couldn't win
+        ls = player_board.board_numbers
+
+        print "\nThe Computer is firing",
+        util.loading()
+        x_axis = random.randint(1, int(ls[-1]))
+        y_axis = random.randint(1, int(ls[-1]))
+        print "(" + str(x_axis) + ", " + str(y_axis) + ")"
+
+        return x_axis, y_axis
+
+    def advanced(self):  # this method is a little soupy if you know what I mean but it works
+        pre_done = False
+
+        if computer.shots_fired == 0:  # if this is the computer's first move, put it the center of the board
+            if len(player_board.board_numbers) == 20:
+                self.computer_x = 10
+                self.computer_y = 10
+            elif len(player_board.board_numbers) == 15:
+                self.computer_x = 8
+                self.computer_y = 8
+            elif len(player_board.board_numbers) == 10:
+                self.computer_x = 5
+                self.computer_y = 5
+
+            self.last = [self.computer_x, self.computer_y]
+            return self.computer_x, self.computer_y
+
+        elif self.last_was_hit:
+            if self.last[1] != 1:
+                self.computer_x = self.last[0]
+                self.computer_y = self.last[1] + 1
+            elif self.last[0] != len(player_board.board_numbers):
+                self.computer_x = self.last[0] + 1
+                self.computer_y = self.last[1]
+
+        elif self.last[0] > len(player_board.board_numbers) - 1:
+            self.computer_x = self.last[0]
+            self.computer_y = self.last[1] - 2
+        elif self.last[1] > len(player_board.board_numbers) - 1:
+            self.computer_x = self.last[0] - 2
+            self.computer_y = self.last[1]
+        else:
+            self.computer_x += 1
+            self.computer_y += 1
+
+        if not pre_done:
+            self.last = [self.computer_x, self.computer_y]
+            return self.computer_x, self.computer_y
 
 
 class Screen:
@@ -168,6 +275,7 @@ class Screen:
             else:
                 print board_object.board_numbers[i] + " ",
         self.other_line = "    " + "____" * (i + 1)
+        self.other_line = self.other_line[:-1]
         print  # space
 
         print self.other_line
@@ -186,6 +294,16 @@ class Screen:
         for i in range(0, len(ls)):
             print str(i + 1) + ".  " + ls[i]
         print
+
+
+class Ship:
+    def __init__(self, length, ship_name, direction, x, y):
+        self.length = length
+        self.direction = direction
+        self.ship_name = ship_name
+        self.x = x
+        self.y = y
+        self.sunk = False
 
 
 class Fleet:
@@ -208,6 +326,7 @@ class Fleet:
     def make_comp_ships(self):
         used_x_axis = []
         used_y_axis = []
+
         for i in range(0, len(self.ship_lengths)):
             x_axis = None
             y_axis = None
@@ -353,75 +472,39 @@ class Player:
         self.number_sunk = 0
         self.shots_fired = 0
 
-    @staticmethod
-    def get_user_shot():
-        mores = False
-        more_ = False
-        y_axis = None
-        x_axis = None
-        ls = player_board.board_numbers
-
-        while not mores:  # get x coordinate
-            x_axis = raw_input("Choose a X coordinate to fire on (1 - " + str(ls[-1]) + "): ")
-            mores = util.try_computer_ship_coordinate(x_axis, ls)
-
-        while not more_:  # get y coordinate
-            y_axis = raw_input("Choose a Y coordinate to fire on (1 - " + str(ls[-1]) + "): ")
-            more_ = util.try_computer_ship_coordinate(y_axis, ls)
-
-        print "\nFiring",
-        util.loading()
-
-        return int(x_axis), int(y_axis)
-
-    @staticmethod
-    def beginner():
-        ls = player_board.board_numbers
-
-        print "The Computer is firing",
-        util.loading()
-        x_axis = random.randint(1, int(ls[-1]))
-        y_axis = random.randint(1, int(ls[-1]))
-
-        return x_axis, y_axis
-
-    def intermediate(self):
-        self.beginner()
-
-    def advanced(self):
-        self.beginner()
-
-
-class Ship:
-    def __init__(self, length, ship_name, direction, x, y):
-        self.length = length
-        self.direction = direction
-        self.ship_name = ship_name
-        self.x = x
-        self.y = y
-        self.sunk = False
-
 
 class Main:
     def __init__(self):
         self.have_won = False
         self.computer_function = {
-            "Lieutenant": computer.beginner,
-            "Captain": computer.intermediate,
-            "Admiral": computer.advanced
+            "Lieutenant": game.beginner,
+            "Captain": game.advanced,
         }
 
-    def shoot_to_kill(self):
+    def shoot_to_kill(self):  # this is the real "main"
+        screen.battle_intro()  # just a print statement... lol
         while not self.have_won:
-            x, y = player.get_user_shot()
-            player_board.fire(x, y, "User")
+            x, y = game.get_user_shot()
+            game.fire(x, y, "User")
+            self.check_status()
 
             comp_x, comp_y = self.computer_function[computer.game_mode]()  # let the computer "guess" a coordinate based on skill level
-            computer_board.fire(comp_x, comp_y, "cpu")
+            game.fire(comp_x, comp_y, "cpu")
+            self.check_status()
+
+    def check_status(self):
+        if player.number_hits == comp_fleet.total_lengths or player.number_sunk == len(comp_fleet.ship_lengths):
+            self.have_won = True
+            player.winner = True
+
+        elif computer.number_hits == player_fleet.total_lengths or computer.number_sunk == len(player_fleet.ship_lengths):
+            self.have_won = True
+            computer.winner = True
 
 # *--------| Main |--------* #
 # object creation:
 screen = Screen()
+game = Game()
 player_board, player, computer_board, computer, player_fleet, comp_fleet = get_baseline()  # start program and get basic information
 main_game = Main()  # create the main object
 
@@ -430,5 +513,4 @@ screen.intro_board()
 player_fleet.make_ships()
 comp_fleet.make_comp_ships()
 screen.print_board(computer_board)  # just for testing purposes
-screen.battle_intro()  # just a print statement... lol
-main_game.shoot_to_kill()
+main_game.shoot_to_kill()  # init main game
