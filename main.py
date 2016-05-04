@@ -9,6 +9,18 @@
     Started: April 20th, 11:30, 2016
 
 //******************************************************************//
+
+    The user needs to be careful when placing ships because there is no
+    overlapping algorithm so you can cheat and only have a few ships on
+    the board...
+
+    Also, the advanced skill level that the computer has isn't the best
+    but it works okay...
+
+    I wanted to get the code that I already had working well before I did
+    anything heroic.
+
+//******************************************************************//
 """
 import util
 import random
@@ -54,8 +66,10 @@ def get_baseline():
     new_board.fill_board()  # fill the new board with all empty spaces
     comp_board = Battlefield(height, width, "Computer Board")
     comp_board.fill_board()  # fill the new computer board with empty spaces
+    new_spectate_board = Battlefield(height, width, "Player Spectate Board")
+    new_spectate_board.fill_board()
 
-    return new_board, new_player, comp_board, comp_player, p_fleet, c_fleet  # return the new objects to be used in Main
+    return new_board, new_player, comp_board, comp_player, p_fleet, c_fleet, new_spectate_board  # return the new objects to be used in Main
 
 
 class Battlefield:
@@ -93,21 +107,29 @@ class Battlefield:
             symbol = self.ship_up
             for i in range(0, ship.length):
                 board.main_board[ship.y + i][ship.x] = symbol
+                appendix = [ship.y + i, ship.x]
+                ship.coords.append(appendix)
 
         elif ship.direction == "D":
             symbol = self.ship_down
             for i in range(0, ship.length):
-                    board.main_board[ship.y - i][ship.x] = symbol
+                board.main_board[ship.y - i][ship.x] = symbol
+                appendix = [ship.y - i, ship.x]
+                ship.coords.append(appendix)
 
         elif ship.direction == "L":
             symbol = self.ship_left
             for i in range(0, ship.length):
                 board.main_board[ship.y][ship.x + i] = symbol
+                appendix = [ship.y, ship.x + i]
+                ship.coords.append(appendix)
 
         elif ship.direction == "R":
             symbol = self.ship_right
             for i in range(0, ship.length):
                 board.main_board[ship.y][ship.x - i] = symbol
+                appendix = [ship.y, ship.x - i]
+                ship.coords.append(appendix)
 
         if board.header == "Player Board":
             print
@@ -137,13 +159,19 @@ class Game:
             if computer_board.main_board[y_axis][x_axis] in self.ship_types:
                 print "You have hit a ship!\n"
                 computer_board.main_board[y_axis][x_axis] = self.hit
+                player_spectate.main_board[y_axis][x_axis] = self.hit
                 player.number_hits += 1
+
+                hit_ship = player_fleet.find_hit_ship(x, y)
+                self.sunk_tester(hit_ship, computer_board)
 
             elif computer_board.main_board[y_axis][x_axis] == self.empty:
                 print "Miss\n"
                 computer_board.main_board[y_axis][x_axis] = self.miss
+                player_spectate.main_board[y_axis][x_axis] = self.miss
                 player.number_missed += 1
 
+            screen.print_board(player_spectate)
             player.shots_fired += 1
             raw_input("Press return to continue: ")
         else:
@@ -153,6 +181,9 @@ class Game:
                 computer.number_hits += 1
                 game.last_was_hit = True
 
+                c_hit_ship = comp_fleet.find_hit_ship(x, y)
+                self.sunk_tester(c_hit_ship, player_board)
+
             elif player_board.main_board[y_axis][x_axis] == self.empty:
                 print "The computer missed you\n"
                 player_board.main_board[y_axis][x_axis] = self.miss
@@ -161,6 +192,22 @@ class Game:
 
             computer.shots_fired += 1
             screen.print_board(player_board)
+
+    def sunk_tester(self, ship, board):
+        counted = 0
+
+        for i in range(0, len(ship.coords)):
+            if board.main_board[ship.coords[i][0]][ship.coords[i][1]] == self.hit:
+                counted += 1
+
+        if counted == ship.length:
+            ship.sunk = True
+            if ship.ship_name[0:1] == "C":
+                print "You have sunk the " + ship.ship_name + "!"
+                player.number_sunk += 1
+            else:
+                print "Your " + ship.ship_name + ' has been sunk by the computer!\n'
+                computer.number_sunk += 1
 
     def get_user_shot(self):
         more = True
@@ -262,7 +309,30 @@ class Screen:
 
     @staticmethod
     def battle_intro():
+        print "/\\|*****************************************************|/\\"
         print "\nYou will fire at the opponent by choosing an X and Y coordinate."
+
+    @staticmethod
+    def congrats_winner(winner):
+        if winner.upper() == "USER":
+            print "Congratulations!!"
+            print "You have beaten the computer in Battleship!"
+
+            print "\nFinal Player Stats:\n"
+            print "Total Shots fired: " + str(player.shots_fired)
+            print "Total hits: " + str(player.number_hits)
+            print "Total ships sunk: " + str(player.number_sunk)
+            print "Total misses: " + str(player.number_missed)
+            print
+        else:
+            print "Well.... You lost..."
+            print "Better luck next time!"
+
+            print "\nFinal Player Stats:\n"
+            print "Total Shots fired: " + str(player.shots_fired)
+            print "Total hits: " + str(player.number_hits)
+            print "Total ships sunk: " + str(player.number_sunk)
+            print "Total misses: " + str(player.number_missed)
 
     def print_board(self, board_object):
         i = 0
@@ -303,6 +373,7 @@ class Ship:
         self.ship_name = ship_name
         self.x = x
         self.y = y
+        self.coords = []
         self.sunk = False
 
 
@@ -323,7 +394,21 @@ class Fleet:
         for i in range(0, len(self.ship_lengths)):
             self.total_lengths += self.ship_lengths[i]
 
-    def make_comp_ships(self):
+    def find_hit_ship(self, x, y):
+        if self.who.upper() == "USER":
+            for i in range(0, len(comp_fleet.ships)):
+                if x - 1 == comp_fleet.ships[i].x:
+                    return comp_fleet.ships[i]
+
+        elif self.who.upper() == "COMPUTER":
+            x_axis = x - 1
+            y_axis = y - 1
+
+            for j in range(0, len(player_fleet.ships)):
+                if [y_axis, x_axis] in player_fleet.ships[j].coords:
+                    return player_fleet.ships[j]
+
+    def make_computer_ships(self):
         used_x_axis = []
         used_y_axis = []
 
@@ -348,7 +433,7 @@ class Fleet:
             y_axis = int(y_axis)
 
             new_ship = Ship(self.ship_lengths[i], "Computer's " + self.names[i], direct, x_axis, y_axis)
-            self.ships.append(new_ship)
+            comp_fleet.ships.append(new_ship)
             computer_board.add_ship(new_ship, computer_board)
 
     def make_ships(self):
@@ -384,7 +469,7 @@ class Fleet:
                 more_ = util.try_battlefield_int(y_axis, y_list)
 
             new_ship = Ship(self.ship_lengths[i], self.names[i], direct, x_axis, y_axis)
-            self.ships.append(new_ship)  # append the newest ship to the ships list
+            player_fleet.ships.append(new_ship)  # append the newest ship to the ships list
             player_board.add_ship(new_ship, player_board)  # put newly create ship on the board
             print  # spacer
 
@@ -492,12 +577,18 @@ class Main:
             game.fire(comp_x, comp_y, "cpu")
             self.check_status()
 
+        if player.winner:
+            won = "user"
+        else:
+            won = "cpu"
+        screen.congrats_winner(won)
+
     def check_status(self):
-        if player.number_hits == comp_fleet.total_lengths or player.number_sunk == len(comp_fleet.ship_lengths):
+        if player.number_hits == comp_fleet.total_lengths or player.number_sunk == len(comp_fleet.ships):
             self.have_won = True
             player.winner = True
 
-        elif computer.number_hits == player_fleet.total_lengths or computer.number_sunk == len(player_fleet.ship_lengths):
+        elif computer.number_hits == player_fleet.total_lengths or computer.number_sunk == len(player_fleet.ships):
             self.have_won = True
             computer.winner = True
 
@@ -505,12 +596,12 @@ class Main:
 # object creation:
 screen = Screen()
 game = Game()
-player_board, player, computer_board, computer, player_fleet, comp_fleet = get_baseline()  # start program and get basic information
+player_board, player, computer_board, computer, player_fleet, comp_fleet, player_spectate = get_baseline()  # start program and get basic information
 main_game = Main()  # create the main object
 
 # main program:
 screen.intro_board()
 player_fleet.make_ships()
-comp_fleet.make_comp_ships()
-screen.print_board(computer_board)  # just for testing purposes
+comp_fleet.make_computer_ships()
+# screen.print_board(computer_board)  # for testing purposes only
 main_game.shoot_to_kill()  # init main game
