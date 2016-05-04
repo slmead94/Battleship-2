@@ -21,6 +21,10 @@
     anything heroic.
 
 //******************************************************************//
+
+    Git repository:   https://github.com/slmead94/Battleship-2
+
+//******************************************************************//
 """
 import util
 import random
