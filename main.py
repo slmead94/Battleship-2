@@ -259,7 +259,7 @@ class Game:
 
         return x_axis, y_axis
 
-    def advanced(self):  # this method is a little soupy if you know what I mean but it works
+    def advanced(self):  # this method is a little sloppy if you know what I mean, but it works...roughly
         pre_done = False
 
         if computer.shots_fired == 0:  # if this is the computer's first move, put it the center of the board
@@ -313,7 +313,7 @@ class Screen:
 
     @staticmethod
     def battle_intro():
-        print "/\\|*****************************************************|/\\"
+        print "|-|*****************************************************|-|"
         print "\nYou will fire at the opponent by choosing an X and Y coordinate."
 
     @staticmethod
@@ -361,6 +361,7 @@ class Screen:
             for columns in range(0, board_object.width):
                 print self.spacer + board_object.main_board[rows][columns],
             print self.spacer
+        print
 
     @staticmethod
     def print_numbered_list(ls):
