@@ -30,52 +30,6 @@ import util
 import random
 
 
-def get_baseline():
-    chosen_level = None
-    chosen_type = None
-    more = True
-    continue_ = True
-    battlefield_types = [[10, 10], [15, 15], [20, 20]]  # 10 X 10, 15 X 15, 20 X 20
-    game_modes = ["Lieutenant", "Captain"]  # different Naval Ranks for the skill levels
-
-    print "\tWelcome to Battleship 2!\n"
-    name = raw_input("Enter your name: ")  # name please?
-
-    print "\nYou may choose from " + str(len(battlefield_types)) + " different battlefield types: (less space - easier to hit each other)\n"
-    for i in range(0, len(battlefield_types)):
-        print str(i + 1) + ".   " + str(battlefield_types[i][0]) + " X " + str(battlefield_types[i][1])  # print list in format
-
-    while more:  # verification loop
-        chosen_type = raw_input("Choose one of the above numbers: ")
-        more = util.try_int(chosen_type, [1, 2, 3])
-
-    print "\nYou may choose from " + str(len(game_modes)) + " different game modes to play:\n"
-    screen.print_numbered_list(game_modes)
-
-    while continue_:
-        chosen_level = raw_input("Choose one of the above numbers: ")
-        continue_ = util.try_int(chosen_level, [1, 2])
-
-    # fill variables with the data we have just collected:
-    width = battlefield_types[int(chosen_type) - 1][0]
-    height = battlefield_types[int(chosen_type) - 1][1]
-    mode = game_modes[int(chosen_level) - 1]
-
-    # create objects to return
-    p_fleet = Fleet("User")
-    c_fleet = Fleet("Computer")
-    new_player = Player(mode, name)
-    comp_player = Player(mode, "Computer")
-    new_board = Battlefield(height, width, "Player Board")
-    new_board.fill_board()  # fill the new board with all empty spaces
-    comp_board = Battlefield(height, width, "Computer Board")
-    comp_board.fill_board()  # fill the new computer board with empty spaces
-    new_spectate_board = Battlefield(height, width, "Player Spectate Board")
-    new_spectate_board.fill_board()
-
-    return new_board, new_player, comp_board, comp_player, p_fleet, c_fleet, new_spectate_board  # return the new objects to be used in Main
-
-
 class Battlefield:
     def __init__(self, height, width, header):
         self.header = header
@@ -561,6 +515,52 @@ class Player:
         self.number_hits = 0
         self.number_sunk = 0
         self.shots_fired = 0
+
+
+def get_baseline():
+    chosen_level = None
+    chosen_type = None
+    more = True
+    continue_ = True
+    battlefield_types = [[10, 10], [15, 15], [20, 20]]  # 10 X 10, 15 X 15, 20 X 20
+    game_modes = ["Lieutenant", "Captain"]  # different Naval Ranks for the skill levels
+
+    print "\tWelcome to Battleship 2!\n"
+    name = raw_input("Enter your name: ")  # name please?
+
+    print "\nYou may choose from " + str(len(battlefield_types)) + " different battlefield types: (less space - easier to hit each other)\n"
+    for i in range(0, len(battlefield_types)):
+        print str(i + 1) + ".   " + str(battlefield_types[i][0]) + " X " + str(battlefield_types[i][1])  # print list in format
+
+    while more:  # verification loop
+        chosen_type = raw_input("Choose one of the above numbers: ")
+        more = util.try_int(chosen_type, [1, 2, 3])
+
+    print "\nYou may choose from " + str(len(game_modes)) + " different game modes to play:\n"
+    screen.print_numbered_list(game_modes)
+
+    while continue_:
+        chosen_level = raw_input("Choose one of the above numbers: ")
+        continue_ = util.try_int(chosen_level, [1, 2])
+
+    # fill variables with the data we have just collected:
+    width = battlefield_types[int(chosen_type) - 1][0]
+    height = battlefield_types[int(chosen_type) - 1][1]
+    mode = game_modes[int(chosen_level) - 1]
+
+    # create objects to return
+    p_fleet = Fleet("User")
+    c_fleet = Fleet("Computer")
+    new_player = Player(mode, name)
+    comp_player = Player(mode, "Computer")
+    new_board = Battlefield(height, width, "Player Board")
+    new_board.fill_board()  # fill the new board with all empty spaces
+    comp_board = Battlefield(height, width, "Computer Board")
+    comp_board.fill_board()  # fill the new computer board with empty spaces
+    new_spectate_board = Battlefield(height, width, "Player Spectate Board")
+    new_spectate_board.fill_board()
+
+    return new_board, new_player, comp_board, comp_player, p_fleet, c_fleet, new_spectate_board  # return the new objects to be used in Main
 
 
 class Main:
