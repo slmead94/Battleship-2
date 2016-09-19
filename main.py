@@ -174,12 +174,12 @@ class Game:
         ls = player_board.board_numbers
 
         while more:
-            current_try = []
+            current_try = []  # array that will hold the user's new guess
             mores = False
             more_ = False
 
             while not mores:  # get x coordinate
-                x_axis = raw_input("Choose a X coordinate to fire on (1 - " + str(ls[-1]) + "): ")
+                x_axis = raw_input("Choose an X coordinate to fire on (1 - " + str(ls[-1]) + "): ")
                 mores = util.try_computer_ship_coordinate(x_axis, ls)
 
             while not more_:  # get y coordinate
@@ -190,7 +190,7 @@ class Game:
             current_try.append(y_axis)
 
             if current_try in self.used:
-                print "You've already fired on the coordinate. Try again:\n"
+                print "You've already fired on the coordinate... Try again:\n"
                 more = True
             else:
                 self.used.append(current_try)
@@ -573,14 +573,14 @@ class Main:
 
     def shoot_to_kill(self):  # this is the real "main"
         screen.battle_intro()  # just a print statement... lol
-        while not self.have_won:
+        while not self.have_won:  # while no one has won
             x, y = game.get_user_shot()
             game.fire(x, y, "User")
             self.check_status()
 
             comp_x, comp_y = self.computer_function[computer.game_mode]()  # let the computer "guess" a coordinate based on skill level
             game.fire(comp_x, comp_y, "cpu")
-            self.check_status()
+            self.check_status()  # see if someone has won the game yet
 
         if player.winner:
             won = "user"
