@@ -52,3 +52,10 @@ def loading():
     print ".",
     time.sleep(0.33)
     print
+
+
+def print_numbered_list(ls):
+    # this makes printing a list with numbers in front of each item much more accessible
+    for i in range(0, len(ls)):
+        print str(i + 1) + ".  " + ls[i]
+    print

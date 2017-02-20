@@ -15,10 +15,8 @@
     the board...
 
     Also, the advanced skill level that the computer has isn't the best
-    but it works okay...
-
-    I wanted to get the code that I already had working well before I did
-    anything heroic.
+    but it works... I wanted to get the code that I already had working
+    well before I did anything heroic.
 
 //******************************************************************//
 
@@ -53,40 +51,43 @@ class Battlefield:
     def add_ship(self, ship, board):
         """
         :param ship: The ship object that contains all of the data needed to put the ship on the given board
-        :param board: the given battlefield that the ship is going to be placed on to
+        :param board: the given board that the ship is going to be placed on to
         """
 
         global player_board, computer_board
-        # we have to decrement the coordinates so they conform to the ways of the list8
+        is_i = None  # the variable that will take on the value of i in the for loop, but could be made negative
+        symbol = None  # the symbol needed for the ship to be "looking" the right direction
+
+        # we have to decrement the coordinates so they conform to the ways of the list
         ship.y = int(ship.y) - 1
         ship.x = int(ship.x) - 1
 
-        if ship.direction == "U":
-            symbol = self.ship_up
+        if ship.direction == "U" or ship.direction == "D":
             for i in range(0, ship.length):
-                board.main_board[ship.y + i][ship.x] = symbol
-                appendix = [ship.y + i, ship.x]
+
+                if ship.direction == "U":
+                    symbol = self.ship_up
+                    is_i = i
+                elif ship.direction == "D":
+                    symbol = self.ship_down
+                    is_i = i / -1
+
+                board.main_board[ship.y + is_i][ship.x] = symbol
+                appendix = [ship.y + is_i, ship.x]
                 ship.coords.append(appendix)
 
-        elif ship.direction == "D":
-            symbol = self.ship_down
+        elif ship.direction == "L" or ship.direction == "R":
             for i in range(0, ship.length):
-                board.main_board[ship.y - i][ship.x] = symbol
-                appendix = [ship.y - i, ship.x]
-                ship.coords.append(appendix)
 
-        elif ship.direction == "L":
-            symbol = self.ship_left
-            for i in range(0, ship.length):
-                board.main_board[ship.y][ship.x + i] = symbol
-                appendix = [ship.y, ship.x + i]
-                ship.coords.append(appendix)
+                if ship.direction == "L":
+                    symbol = self.ship_left
+                    is_i = i
+                elif ship.direction == "R":
+                    symbol = self.ship_right
+                    is_i = i / -1
 
-        elif ship.direction == "R":
-            symbol = self.ship_right
-            for i in range(0, ship.length):
-                board.main_board[ship.y][ship.x - i] = symbol
-                appendix = [ship.y, ship.x - i]
+                board.main_board[ship.y][ship.x + is_i] = symbol
+                appendix = [ship.y, ship.x + is_i]
                 ship.coords.append(appendix)
 
         if board.header == "Player Board":
@@ -274,23 +275,17 @@ class Screen:
     def congrats_winner(winner):
         if winner.upper() == "USER":
             print "Congratulations!!"
-            print "You have beaten the computer in Battleship!"
-
-            print "\nFinal Player Stats:\n"
-            print "Total Shots fired: " + str(player.shots_fired)
-            print "Total hits: " + str(player.number_hits)
-            print "Total ships sunk: " + str(player.number_sunk)
-            print "Total misses: " + str(player.number_missed)
-            print
+            print "You have beaten the computer!"
         else:
-            print "Well.... You lost..."
+            print "Well... You lost..."
             print "Better luck next time!"
 
-            print "\nFinal Player Stats:\n"
-            print "Total Shots fired: " + str(player.shots_fired)
-            print "Total hits: " + str(player.number_hits)
-            print "Total ships sunk: " + str(player.number_sunk)
-            print "Total misses: " + str(player.number_missed)
+        print "\n\tFinal Player Stats:\n"
+        print "Total Shots fired: " + str(player.shots_fired)
+        print "Total hits: " + str(player.number_hits)
+        print "Total ships sunk: " + str(player.number_sunk)
+        print "Total misses: " + str(player.number_missed)
+        print
 
     def print_board(self, board_object):
         i = 0
@@ -298,7 +293,7 @@ class Screen:
         print board_object.header
         print "    ",
         for i in range(0, len(board_object.board_numbers)):  # print the numbers
-            if i < 9:  # if the number is double digits take away one space to keep it even
+            if i < 9:  # if the board is double digits take away one space to keep it even
                 print board_object.board_numbers[i] + "  ",
             else:
                 print board_object.board_numbers[i] + " ",
@@ -308,20 +303,13 @@ class Screen:
 
         print self.other_line
         for rows in range(0, board_object.height):
-            if rows < 9:  # if the number is double digit take away 1 space
+            if rows < 9:  # if the board is a double digit board, like: 15x15 or 20x20, take away 1 space
                 print str(rows + 1) + " ",
             else:
                 print str(rows + 1),
             for columns in range(0, board_object.width):
                 print self.spacer + board_object.main_board[rows][columns],
             print self.spacer
-        print
-
-    @staticmethod
-    def print_numbered_list(ls):
-        # this makes printing a list with numbers in front of each item much more accessible
-        for i in range(0, len(ls)):
-            print str(i + 1) + ".  " + ls[i]
         print
 
 
@@ -407,7 +395,7 @@ class Fleet:
             more_ = True
 
             print self.names[i] + " (size=" + str(self.ship_lengths[i]) + "):\n"
-            screen.print_numbered_list(self.directions)
+            util.print_numbered_list(self.directions)
 
             while more:  # get direction
                 direct = raw_input("Choose the number related to the direction that you would like your " + self.names[i] + " to face: ")
@@ -433,8 +421,8 @@ class Fleet:
             print  # spacer
 
     def get_list(self, direction, counter):
-        """
 
+        """
         :param direction: The direction the boat wants be pointed in
         :param counter: the current value of i in the method that called this method
         :return: newly made lists for use back in the ship creation method ^^
@@ -537,7 +525,7 @@ def get_baseline():
         more = util.try_int(chosen_type, [1, 2, 3])
 
     print "\nYou may choose from " + str(len(game_modes)) + " different game modes to play:\n"
-    screen.print_numbered_list(game_modes)
+    util.print_numbered_list(game_modes)
 
     while continue_:
         chosen_level = raw_input("Choose one of the above numbers: ")
@@ -601,12 +589,12 @@ class Main:
 # object creation:
 screen = Screen()
 game = Game()
-player_board, player, computer_board, computer, player_fleet, comp_fleet, player_spectate = get_baseline()  # start program and get basic information
+player_board, player, computer_board, computer, player_fleet, comp_fleet, player_spectate = get_baseline()  # start program and get game information
 main_game = Main()  # create the main object
 
 # main program:
 screen.intro_board()
 player_fleet.make_ships()
 comp_fleet.make_computer_ships()
-# screen.print_board(computer_board)  # for testing purposes only
+# screen.print_board(computer_board)  # for testing purposes only ; un-commenting this line allows you to see the opponents board
 main_game.shoot_to_kill()  # init main game
