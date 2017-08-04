@@ -214,7 +214,7 @@ class Game:
 
         return x_axis, y_axis
 
-    def advanced(self):  # this method is a little sloppy if you know what I mean, but it works...roughly
+    def advanced(self):  # buggy
         pre_done = False
 
         if computer.shots_fired == 0:  # if this is the computer's first move, put it the center of the board
